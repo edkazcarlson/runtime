@@ -1,5 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -1254,7 +1255,6 @@ namespace ILCompiler.Reflection.ReadyToRun
 
 
                 case ReadyToRunFixupKind.Check_TypeLayout:
-                case ReadyToRunFixupKind.Verify_TypeLayout:
                     ParseType(builder);
                     ReadyToRunTypeLayoutFlags layoutFlags = (ReadyToRunTypeLayoutFlags)ReadUInt();
                     builder.Append($" Flags {layoutFlags}");
@@ -1287,23 +1287,13 @@ namespace ILCompiler.Reflection.ReadyToRun
                         }
                     }
 
-                    if (fixupType == ReadyToRunFixupKind.Check_TypeLayout)
-                        builder.Append(" (CHECK_TYPE_LAYOUT)");
-                    else
-                        builder.Append(" (VERIFY_TYPE_LAYOUT)");
+                    builder.Append(" (CHECK_TYPE_LAYOUT)");
                     break;
 
                 case ReadyToRunFixupKind.Check_FieldOffset:
                     builder.Append($"{ReadUInt()} ");
                     ParseField(builder);
                     builder.Append(" (CHECK_FIELD_OFFSET)");
-                    break;
-
-                case ReadyToRunFixupKind.Verify_FieldOffset:
-                    builder.Append($"{ReadUInt()} ");
-                    builder.Append($"{ReadUInt()} ");
-                    ParseField(builder);
-                    builder.Append(" (VERIFY_FIELD_OFFSET)");
                     break;
 
                 case ReadyToRunFixupKind.Check_InstructionSetSupport:
@@ -1472,9 +1462,6 @@ namespace ILCompiler.Reflection.ReadyToRun
                     builder.Append("GC_COOKIE");
                     break;
 
-                case ReadyToRunHelper.IndirectTrapThreads:
-                    builder.Append("INDIRECT_TRAP_THREADS");
-                    break;
 
                 //
                 // Delay load helpers

@@ -1,5 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -80,7 +81,7 @@ namespace ILCompiler.Reflection.ReadyToRun
         private List<ReadyToRunCoreHeader> _readyToRunAssemblyHeaders;
 
         // DebugInfo
-        private Dictionary<int, DebugInfo> _runtimeFunctionToDebugInfo;
+        private Dictionary<int, int> _runtimeFunctionIdToDebugOffset;
 
         // ManifestReferences
         private MetadataReader _manifestReader;
@@ -322,12 +323,12 @@ namespace ILCompiler.Reflection.ReadyToRun
 
         }
 
-        internal Dictionary<int, DebugInfo> RuntimeFunctionToDebugInfo
+        internal Dictionary<int, int> RuntimeFunctionToDebugInfo
         {
             get
             {
                 EnsureDebugInfo();
-                return _runtimeFunctionToDebugInfo;
+                return _runtimeFunctionIdToDebugOffset;
             }
         }
 
@@ -583,11 +584,11 @@ namespace ILCompiler.Reflection.ReadyToRun
 
         private void EnsureDebugInfo()
         {
-            if (_runtimeFunctionToDebugInfo != null)
+            if (_runtimeFunctionIdToDebugOffset != null)
             {
                 return;
             }
-            _runtimeFunctionToDebugInfo = new Dictionary<int, DebugInfo>();
+            _runtimeFunctionIdToDebugOffset = new Dictionary<int, int>();
             if (!ReadyToRunHeader.Sections.TryGetValue(ReadyToRunSectionType.DebugInfo, out ReadyToRunSection debugInfoSection))
             {
                 return;
@@ -604,8 +605,7 @@ namespace ILCompiler.Reflection.ReadyToRun
                     continue;
                 }
 
-                var debugInfo = new DebugInfo(this, offset);
-                _runtimeFunctionToDebugInfo.Add((int)i, debugInfo);
+                _runtimeFunctionIdToDebugOffset.Add((int)i, offset);
             }
         }
 
@@ -741,7 +741,7 @@ namespace ILCompiler.Reflection.ReadyToRun
                     int runtimeFunctionId;
                     int? fixupOffset;
                     GetRuntimeFunctionIndexFromOffset(offset, out runtimeFunctionId, out fixupOffset);
-                    ReadyToRunMethod method = new ReadyToRunMethod(this, metadataReader, methodHandle, runtimeFunctionId, owningType: null, constrainedType: null, instanceArgs: null, fixupOffset: fixupOffset);
+                    ReadyToRunMethod method = new ReadyToRunMethod(this, this.PEReader, metadataReader, methodHandle, runtimeFunctionId, owningType: null, constrainedType: null, instanceArgs: null, fixupOffset: fixupOffset);
 
                     if (method.EntryPointRuntimeFunctionId < 0 || method.EntryPointRuntimeFunctionId >= isEntryPoint.Length)
                     {
@@ -889,6 +889,7 @@ namespace ILCompiler.Reflection.ReadyToRun
                 GetRuntimeFunctionIndexFromOffset((int)decoder.Offset, out runtimeFunctionId, out fixupOffset);
                 ReadyToRunMethod method = new ReadyToRunMethod(
                     this,
+                    this.PEReader,
                     mdReader,
                     methodHandle,
                     runtimeFunctionId,
